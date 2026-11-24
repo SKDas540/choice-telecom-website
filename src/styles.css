@@ -618,6 +618,8 @@ html[data-language="bn"] select {
   color: var(--color-text);
   font-size: 16px;
 }
+.emi-variant-field { display: flex; flex-direction: column; gap: 9px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--color-border); }
+.emi-variant-field label { margin: 0; }
 .emi-note { margin: 20px 0 0; color: var(--color-text-muted); font-size: 13px; line-height: 1.7; }
 .emi-summary {
   overflow: hidden;

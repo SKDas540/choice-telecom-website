@@ -445,24 +445,20 @@ const emiMatrix = {
 
 function EmiCalculator({ initialPrice = 0, standalone = false }) {
   const [selectedPrice, setSelectedPrice] = useState(initialPrice || 0);
-  const [selectedVariantKey, setSelectedVariantKey] = useState("custom");
+  const [selectedModelId, setSelectedModelId] = useState("custom");
+  const [selectedVariantId, setSelectedVariantId] = useState("");
   const [customPrice, setCustomPrice] = useState("");
   const [down, setDown] = useState(0);
   const [months, setMonths] = useState(6);
-  const phoneVariants = useMemo(
-    () => CHOICE_PRODUCTS.flatMap((product) => (product.variants || [])
-      .filter((variant) => Number.isFinite(variant.price))
-      .map((variant) => ({
-        key: `${product.id}:${variant.id}`,
-        label: `${product.brand} ${product.name} · ${variant.ram}GB RAM / ${variant.storage}GB`,
-        price: variant.price,
-      }))),
+  const emiProducts = useMemo(
+    () => CHOICE_PRODUCTS.filter((product) => product.variants?.some((variant) => Number.isFinite(variant.price))),
     [],
   );
+  const selectedModel = emiProducts.find((product) => product.id === selectedModelId);
+  const availableVariants = selectedModel?.variants.filter((variant) => Number.isFinite(variant.price)) || [];
   useEffect(() => {
     if (!standalone) {
       setSelectedPrice(initialPrice || 0);
-      setSelectedVariantKey("custom");
     }
   }, [initialPrice, standalone]);
   const mobilePrice = selectedPrice > 0
@@ -480,19 +476,40 @@ function EmiCalculator({ initialPrice = 0, standalone = false }) {
       <div className="emi-heading"><div><p className="eyebrow">EMI CALCULATOR</p><h2>{standalone ? "Calculate your monthly payment" : "Plan your payment"}</h2></div><span className="emi-badge">{down}% down payment</span></div>
       <div className="emi-grid">
         <div className="emi-controls">
-          {standalone && <><label htmlFor="emi-phone">Select phone</label><select id="emi-phone" value={selectedVariantKey} onChange={(event) => {
-            const variant = phoneVariants.find((item) => item.key === event.target.value);
-            setSelectedVariantKey(event.target.value);
-            setSelectedPrice(variant?.price || 0);
-            setCustomPrice("");
-          }}>
-            <option value="custom">Custom price</option>
-            {phoneVariants.map((variant) => (
-              <option key={variant.key} value={variant.key}>
-                {variant.label} — {formatMoney(variant.price)}
-              </option>
-            ))}
-          </select><label htmlFor="emi-custom-price">Custom price (BDT)</label><input id="emi-custom-price" type="number" min="0" value={customPrice} onChange={(event) => { setCustomPrice(event.target.value); setSelectedPrice(0); setSelectedVariantKey("custom"); }} placeholder="Enter phone price" /></>}
+          {standalone && <>
+            <label htmlFor="emi-phone">Select phone model</label>
+            <select id="emi-phone" value={selectedModelId} onChange={(event) => {
+              const product = emiProducts.find((item) => item.id === event.target.value);
+              const firstVariant = product?.variants.find((variant) => Number.isFinite(variant.price));
+              setSelectedModelId(event.target.value);
+              setSelectedVariantId(firstVariant?.id || "");
+              setSelectedPrice(firstVariant?.price || 0);
+              setCustomPrice("");
+            }}>
+              <option value="custom">Custom price</option>
+              {emiProducts.map((product) => (
+                <option key={product.id} value={product.id}>{product.brand} {product.name}</option>
+              ))}
+            </select>
+            {selectedModel && <div className="emi-variant-field">
+              <label htmlFor="emi-phone-variant">Choose RAM and ROM</label>
+              <select id="emi-phone-variant" value={selectedVariantId} onChange={(event) => {
+                const variant = availableVariants.find((item) => item.id === event.target.value);
+                setSelectedVariantId(event.target.value);
+                setSelectedPrice(variant?.price || 0);
+              }}>
+                {availableVariants.map((variant) => (
+                  <option key={variant.id} value={variant.id}>
+                    {variant.ram}GB RAM / {variant.storage}GB ROM — {formatMoney(variant.price)}
+                  </option>
+                ))}
+              </select>
+            </div>}
+            {selectedModelId === "custom" && <>
+              <label htmlFor="emi-custom-price">Custom price (BDT)</label>
+              <input id="emi-custom-price" type="number" min="0" value={customPrice} onChange={(event) => { setCustomPrice(event.target.value); setSelectedPrice(0); }} placeholder="Enter phone price" />
+            </>}
+          </>}
           <label htmlFor="emi-down-payment">Down payment</label>
           <select id="emi-down-payment" value={down} onChange={(event) => setDown(Number(event.target.value))}>{[0, 20, 30, 40, 50, 60].map((value) => <option key={value} value={value}>{value}%</option>)}</select>
           <label htmlFor="emi-months">EMI duration</label>
