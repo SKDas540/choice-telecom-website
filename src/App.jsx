@@ -69,11 +69,11 @@ function Layout({ children, language, setLanguage, theme, setTheme }) {
             <span className="menu-lines" aria-hidden="true" />
           </button>
           <nav className={`primary-nav${menuOpen ? " is-open" : ""}`} id="primary-nav" aria-label="Main navigation">
-            <NavLink className="nav-link" to="/" end>{isBangla ? "হোম" : "Home"}</NavLink>
-            <NavLink className="nav-link" to="/products">{isBangla ? "ফোন" : "Phones"}</NavLink>
-            <NavLink className="nav-link" to="/offers">{isBangla ? "অফার ও ইএমআই" : "Offers & EMI"}</NavLink>
-            <NavLink className="nav-link" to="/about">{isBangla ? "আমাদের কথা" : "About"}</NavLink>
-            <NavLink className="nav-link" to="/contact">{isBangla ? "যোগাযোগ" : "Contact"}</NavLink>
+            <NavLink className={({ isActive }) => `nav-link${isActive ? " is-current" : ""}`} to="/" end>{isBangla ? "হোম" : "Home"}</NavLink>
+            <NavLink className={({ isActive }) => `nav-link${isActive ? " is-current" : ""}`} to="/products">{isBangla ? "ফোন" : "Phones"}</NavLink>
+            <NavLink className={({ isActive }) => `nav-link${isActive ? " is-current" : ""}`} to="/offers">{isBangla ? "অফার ও ইএমআই" : "Offers & EMI"}</NavLink>
+            <NavLink className={({ isActive }) => `nav-link${isActive ? " is-current" : ""}`} to="/about">{isBangla ? "আমাদের কথা" : "About"}</NavLink>
+            <NavLink className={({ isActive }) => `nav-link${isActive ? " is-current" : ""}`} to="/contact">{isBangla ? "যোগাযোগ" : "Contact"}</NavLink>
             <button
               className="language-toggle"
               type="button"
@@ -196,34 +196,22 @@ function Home() {
   const featured = CHOICE_PRODUCTS.filter((product) => product.featured).slice(0, 4);
   const campaigns = [
     {
-      id: "exchange",
-      eyebrow: "DEMO OFFER · ASK IN STORE",
-      title: "Trade in your old phone.",
-      description: "Explore an exchange toward your next device. Final value depends on an in-store inspection.",
-      action: "Explore exchange",
-      href: "/offers#exchange",
-      theme: "exchange",
-      art: "↻",
-    },
-    {
       id: "emi",
-      eyebrow: "DEMO OFFER · TERMS TO CONFIRM",
-      title: "EMI without a credit card.",
-      description: "Ask about a sample 6-month plan with 20% down. Eligibility and availability must be confirmed.",
-      action: "View EMI options",
+      title: "20% down payment and 6-month installment offer",
+      image: "/assets/images/posters/emi-installment.png",
       href: "/offers#emi-calculator",
-      theme: "emi",
-      art: "6",
     },
     {
-      id: "flexible",
-      eyebrow: "CHOICE TELECOM · DEMO",
-      title: "A better way to choose.",
-      description: "Compare phones, ask questions and find a payment option that works for you.",
-      action: "Browse phones",
-      href: "/products",
-      theme: "flexible",
-      art: "✳",
+      id: "exchange",
+      title: "Exchange your old phone for a new one",
+      image: "/assets/images/posters/mobile-exchange.png",
+      href: "/offers#exchange",
+    },
+    {
+      id: "trade-in",
+      title: "Trade in your old phone and get a new phone with installments",
+      image: "/assets/images/posters/trade-in-installment.png",
+      href: "/offers#exchange",
     },
   ];
   const campaignTrackRef = useRef(null);
@@ -298,25 +286,28 @@ function Home() {
       <section className="campaign-section" aria-labelledby="campaign-heading">
         <div className="container section-heading campaign-heading">
           <div><p className="eyebrow">OFFERS TO EXPLORE</p><h2 id="campaign-heading">Find your next deal.</h2></div>
-          <span className="campaign-demo-note">Sample posters · confirm all terms in store</span>
+          <span className="campaign-demo-note">Promotions and availability are confirmed in store.</span>
         </div>
         <div className="campaign-viewport" ref={campaignViewportRef}>
           <div className="campaign-track" ref={campaignTrackRef}>
             {[...campaigns, ...campaigns].map((campaign, index) => (
               <article
                 key={`${campaign.id}-${index}`}
-                className={`campaign-card campaign-${campaign.theme}`}
+                className="campaign-card"
                 aria-hidden={index >= campaigns.length ? "true" : undefined}
               >
-                <div className="campaign-copy">
-                  <p className="campaign-eyebrow">{campaign.eyebrow}</p>
-                  <h3>{campaign.title}</h3>
-                  <p className="campaign-description">{campaign.description}</p>
-                  <Link className="campaign-action" to={campaign.href} tabIndex={index >= campaigns.length ? -1 : undefined}>
-                    {campaign.action}<span aria-hidden="true">→</span>
-                  </Link>
-                </div>
-                <span className="campaign-art" aria-hidden="true">{campaign.art}</span>
+                <Link
+                  className="campaign-poster-link"
+                  to={campaign.href}
+                  tabIndex={index >= campaigns.length ? -1 : undefined}
+                >
+                  <img
+                    className="campaign-poster"
+                    src={campaign.image}
+                    alt={campaign.title}
+                    loading="lazy"
+                  />
+                </Link>
               </article>
             ))}
           </div>
