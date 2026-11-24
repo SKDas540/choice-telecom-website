@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, NavLink, Route, Routes, useLocation, useParams } from "react-router-dom";
+import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { CHOICE_PRODUCTS } from "./data/products.js";
 
 const assetUrl = (path) => (path?.startsWith("/") ? path : `/${path}`);
@@ -31,11 +31,22 @@ function Brand() {
 function Layout({ children, language, setLanguage, theme, setTheme }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState(() => new URLSearchParams(location.search).get("search") || "");
   const isBangla = language === "bn";
 
   useEffect(() => {
     setMenuOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    setSearchQuery(new URLSearchParams(location.search).get("search") || "");
+  }, [location.search]);
+
+  useEffect(() => {
+    if (!location.hash) return;
+    document.getElementById(location.hash.slice(1))?.scrollIntoView({ behavior: "smooth" });
+  }, [location.pathname, location.hash]);
 
   return (
     <>
@@ -84,8 +95,36 @@ function Layout({ children, language, setLanguage, theme, setTheme }) {
             </button>
           </nav>
         </div>
+        <div className="header-search-row">
+          <div className="container">
+            <form
+              className="global-search"
+              role="search"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const search = searchQuery.trim();
+                navigate(`/products${search ? `?search=${encodeURIComponent(search)}` : ""}`);
+              }}
+            >
+              <span aria-hidden="true">⌕</span>
+              <label className="visually-hidden" htmlFor="global-phone-search">Search all phones</label>
+              <input
+                id="global-phone-search"
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search all phones by brand, model or feature"
+              />
+              <button type="submit">Search</button>
+            </form>
+          </div>
+        </div>
       </header>
       <main id="main">{children}</main>
+      <Link className="emi-support" to="/offers#emi-calculator">
+        <span aria-hidden="true">৳</span>
+        <span>EMI options</span>
+      </Link>
       <a
         className="whatsapp-support"
         href={`https://wa.me/${OWNER_WHATSAPP}?text=Hello%20Choice%20Telecom%2C%20I%20need%20help.`}
@@ -155,6 +194,39 @@ function ProductCard({ product, showPrice = true }) {
 
 function Home() {
   const featured = CHOICE_PRODUCTS.filter((product) => product.featured).slice(0, 4);
+  const campaigns = [
+    {
+      id: "exchange",
+      eyebrow: "DEMO OFFER · ASK IN STORE",
+      title: "Trade in your old phone.",
+      description: "Explore an exchange toward your next device. Final value depends on an in-store inspection.",
+      action: "Explore exchange",
+      href: "/offers#exchange",
+      theme: "exchange",
+      art: "↻",
+    },
+    {
+      id: "emi",
+      eyebrow: "DEMO OFFER · TERMS TO CONFIRM",
+      title: "EMI without a credit card.",
+      description: "Ask about a sample 6-month plan with 20% down. Eligibility and availability must be confirmed.",
+      action: "View EMI options",
+      href: "/offers#emi-calculator",
+      theme: "emi",
+      art: "6",
+    },
+    {
+      id: "flexible",
+      eyebrow: "CHOICE TELECOM · DEMO",
+      title: "A better way to choose.",
+      description: "Compare phones, ask questions and find a payment option that works for you.",
+      action: "Browse phones",
+      href: "/products",
+      theme: "flexible",
+      art: "✳",
+    },
+  ];
+
   return (
     <>
       <section className="hero">
@@ -187,6 +259,33 @@ function Home() {
           <div className="trust-item"><span className="trust-icon">⌖</span><span><strong>Shop local</strong><small>Visit us in Nawabganj</small></span></div>
         </div>
       </section>
+      <section className="campaign-section" aria-labelledby="campaign-heading">
+        <div className="container section-heading campaign-heading">
+          <div><p className="eyebrow">OFFERS TO EXPLORE</p><h2 id="campaign-heading">Find your next deal.</h2></div>
+          <span className="campaign-demo-note">Sample posters · confirm all terms in store</span>
+        </div>
+        <div className="campaign-viewport">
+          <div className="campaign-track">
+            {[...campaigns, ...campaigns].map((campaign, index) => (
+              <article
+                key={`${campaign.id}-${index}`}
+                className={`campaign-card campaign-${campaign.theme}`}
+                aria-hidden={index >= campaigns.length ? "true" : undefined}
+              >
+                <div className="campaign-copy">
+                  <p className="campaign-eyebrow">{campaign.eyebrow}</p>
+                  <h3>{campaign.title}</h3>
+                  <p className="campaign-description">{campaign.description}</p>
+                  <Link className="campaign-action" to={campaign.href} tabIndex={index >= campaigns.length ? -1 : undefined}>
+                    {campaign.action}<span aria-hidden="true">→</span>
+                  </Link>
+                </div>
+                <span className="campaign-art" aria-hidden="true">{campaign.art}</span>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
       <section className="section section-products">
         <div className="container">
           <div className="section-heading">
@@ -212,19 +311,35 @@ function Home() {
 }
 
 function Products() {
-  const [query, setQuery] = useState("");
+  const location = useLocation();
+  const [query, setQuery] = useState(() => new URLSearchParams(location.search).get("search") || "");
   const [sort, setSort] = useState("featured");
+  const [brand, setBrand] = useState("all");
+  const [category, setCategory] = useState("all");
+  const brands = useMemo(
+    () => [...new Set(CHOICE_PRODUCTS.map((product) => product.brand))].sort((a, b) => a.localeCompare(b)),
+    [],
+  );
+  useEffect(() => {
+    setQuery(new URLSearchParams(location.search).get("search") || "");
+  }, [location.search]);
+
   const visible = useMemo(() => {
-    const filtered = CHOICE_PRODUCTS.filter((product) =>
-      `${product.brand} ${product.name} ${product.description}`.toLowerCase().includes(query.toLowerCase()),
-    );
+    const filtered = CHOICE_PRODUCTS.filter((product) => {
+      const searchableText = `${product.brand} ${product.name} ${product.description} ${Object.values(product.specifications || {}).join(" ")} ${(product.variants || []).map((variant) => `${variant.ram}GB ${variant.storage}GB`).join(" ")}`;
+      const network = (product.specifications?.Network || "").toLowerCase();
+      const networkCategory = network.includes("5g") ? "5g" : network.includes("4g") ? "4g" : "to be confirmed";
+      return searchableText.toLowerCase().includes(query.toLowerCase())
+        && (brand === "all" || product.brand === brand)
+        && (category === "all" || networkCategory === category);
+    });
     return [...filtered].sort((a, b) => {
       if (sort === "price-low") return (startingPrice(a) ?? Infinity) - (startingPrice(b) ?? Infinity);
       if (sort === "price-high") return (startingPrice(b) ?? -Infinity) - (startingPrice(a) ?? -Infinity);
       if (sort === "name") return a.name.localeCompare(b.name);
       return Number(Boolean(b.featured)) - Number(Boolean(a.featured));
     });
-  }, [query, sort]);
+  }, [query, sort, brand, category]);
 
   return (
     <>
@@ -239,12 +354,28 @@ function Products() {
             <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by brand or model" />
             <span className="search-shortcut">Search</span>
           </label>
-          <label className="sort-control"><span>Sort by</span>
-            <select value={sort} onChange={(event) => setSort(event.target.value)}>
+          <div className="catalog-filters">
+            <label className="filter-control"><span>Brand</span>
+              <select value={brand} onChange={(event) => setBrand(event.target.value)}>
+                <option value="all">All brands</option>
+                {brands.map((name) => <option key={name} value={name}>{name}</option>)}
+              </select>
+            </label>
+            <label className="filter-control"><span>Category</span>
+              <select value={category} onChange={(event) => setCategory(event.target.value)}>
+                <option value="all">All phones</option>
+                <option value="5g">5G phones</option>
+                <option value="4g">4G phones</option>
+                <option value="to be confirmed">Network to be confirmed</option>
+              </select>
+            </label>
+            <label className="sort-control"><span>Sort by</span>
+              <select value={sort} onChange={(event) => setSort(event.target.value)}>
               <option value="featured">Featured</option><option value="price-low">Price: low to high</option>
               <option value="price-high">Price: high to low</option><option value="name">Name: A to Z</option>
-            </select>
-          </label>
+              </select>
+            </label>
+          </div>
         </div>
         <div className="catalog-results" aria-live="polite">
           {visible.length
@@ -266,11 +397,25 @@ const emiMatrix = {
 
 function EmiCalculator({ initialPrice = 0, standalone = false }) {
   const [selectedPrice, setSelectedPrice] = useState(initialPrice || 0);
+  const [selectedVariantKey, setSelectedVariantKey] = useState("custom");
   const [customPrice, setCustomPrice] = useState("");
   const [down, setDown] = useState(0);
   const [months, setMonths] = useState(6);
+  const phoneVariants = useMemo(
+    () => CHOICE_PRODUCTS.flatMap((product) => (product.variants || [])
+      .filter((variant) => Number.isFinite(variant.price))
+      .map((variant) => ({
+        key: `${product.id}:${variant.id}`,
+        label: `${product.brand} ${product.name} · ${variant.ram}GB RAM / ${variant.storage}GB`,
+        price: variant.price,
+      }))),
+    [],
+  );
   useEffect(() => {
-    if (!standalone) setSelectedPrice(initialPrice || 0);
+    if (!standalone) {
+      setSelectedPrice(initialPrice || 0);
+      setSelectedVariantKey("custom");
+    }
   }, [initialPrice, standalone]);
   const mobilePrice = selectedPrice > 0
     ? selectedPrice
@@ -283,14 +428,23 @@ function EmiCalculator({ initialPrice = 0, standalone = false }) {
   const monthly = months > 0 ? total / months : 0;
 
   return (
-    <section className={`emi-calculator${standalone ? " emi-calculator-page" : ""}`}>
+    <section id={standalone ? "emi-calculator" : undefined} className={`emi-calculator${standalone ? " emi-calculator-page" : ""}`}>
       <div className="emi-heading"><div><p className="eyebrow">EMI CALCULATOR</p><h2>{standalone ? "Calculate your monthly payment" : "Plan your payment"}</h2></div><span className="emi-badge">{down}% down payment</span></div>
       <div className="emi-grid">
         <div className="emi-controls">
-          {standalone && <><label htmlFor="emi-phone">Select phone</label><select id="emi-phone" value={selectedPrice} onChange={(event) => { setSelectedPrice(Number(event.target.value)); setCustomPrice(""); }}>
-            <option value="0">Custom price</option>
-            {CHOICE_PRODUCTS.filter((product) => Number.isFinite(product.price)).map((product) => <option key={product.id} value={product.price}>{product.brand} {product.name}</option>)}
-          </select><label htmlFor="emi-custom-price">Custom price (BDT)</label><input id="emi-custom-price" type="number" min="0" value={customPrice} onChange={(event) => { setCustomPrice(event.target.value); setSelectedPrice(0); }} placeholder="Enter phone price" /></>}
+          {standalone && <><label htmlFor="emi-phone">Select phone</label><select id="emi-phone" value={selectedVariantKey} onChange={(event) => {
+            const variant = phoneVariants.find((item) => item.key === event.target.value);
+            setSelectedVariantKey(event.target.value);
+            setSelectedPrice(variant?.price || 0);
+            setCustomPrice("");
+          }}>
+            <option value="custom">Custom price</option>
+            {phoneVariants.map((variant) => (
+              <option key={variant.key} value={variant.key}>
+                {variant.label} — {formatMoney(variant.price)}
+              </option>
+            ))}
+          </select><label htmlFor="emi-custom-price">Custom price (BDT)</label><input id="emi-custom-price" type="number" min="0" value={customPrice} onChange={(event) => { setCustomPrice(event.target.value); setSelectedPrice(0); setSelectedVariantKey("custom"); }} placeholder="Enter phone price" /></>}
           <label htmlFor="emi-down-payment">Down payment</label>
           <select id="emi-down-payment" value={down} onChange={(event) => setDown(Number(event.target.value))}>{[0, 20, 30, 40, 50, 60].map((value) => <option key={value} value={value}>{value}%</option>)}</select>
           <label htmlFor="emi-months">EMI duration</label>
@@ -484,7 +638,7 @@ function About() {
       </div></section>
       <section className="section"><div className="container about-grid">
         <div className="owner-profile">
-          <img src="/assets/images/team-owner.svg" alt="Choice Telecom shop owner" loading="lazy" />
+          <img src="/assets/images/shop-owner.png" alt="Choice Telecom shop owner" loading="lazy" />
           <div className="owner-profile-copy">
             <div className="owner-profile-kicker"><span aria-hidden="true">✦</span><p className="eyebrow">SHOP OWNER & FOUNDER</p></div>
             <h3>Md. Nural Amin (Raju)</h3>
