@@ -495,12 +495,13 @@ html[data-language="bn"] select {
 .product-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
 .product-image {
   display: grid;
+  grid-template-rows: minmax(0, 1fr);
   height: 260px;
   place-items: center;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface-alt);
 }
-.product-image img { width: 100%; height: 100%; object-fit: contain; }
+.product-image img { min-width: 0; min-height: 0; width: 100%; height: 100%; object-fit: contain; }
 .product-placeholder, .detail-image-placeholder {
   display: grid;
   width: 92px;
@@ -1014,7 +1015,8 @@ html[data-language="bn"] select {
   .contact-card { padding: 23px; }
   .whatsapp-support { right: 12px; bottom: 12px; width: 52px; height: 52px; justify-content: center; padding: 7px; }
   .whatsapp-support span { display: none; }
-  .emi-support { right: 12px; bottom: 73px; min-height: 45px; padding: 6px 12px; }
+  .emi-support { right: 12px; bottom: 73px; width: 48px; min-height: 48px; justify-content: center; padding: 6px; }
+  .emi-support > span:last-child { display: none; }
   .owner-profile { min-height: 0; }
   .owner-profile img { height: min(420px, 110vw); }
   .team-heading { flex-direction: column; align-items: flex-start; }

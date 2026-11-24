@@ -121,7 +121,7 @@ function Layout({ children, language, setLanguage, theme, setTheme }) {
         </div>
       </header>
       <main id="main">{children}</main>
-      <Link className="emi-support" to="/offers#emi-calculator">
+      <Link className="emi-support" to="/offers#emi-calculator" aria-label="EMI options">
         <span aria-hidden="true">৳</span>
         <span>EMI options</span>
       </Link>
