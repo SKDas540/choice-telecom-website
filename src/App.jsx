@@ -226,6 +226,42 @@ function Home() {
       art: "✳",
     },
   ];
+  const campaignTrackRef = useRef(null);
+  const campaignViewportRef = useRef(null);
+  const [activeCampaign, setActiveCampaign] = useState(0);
+
+  useEffect(() => {
+    let frameId;
+    const updateActiveCampaign = () => {
+      const animation = campaignTrackRef.current?.getAnimations()[0];
+      const duration = animation?.effect?.getTiming().duration;
+      const currentTime = animation?.currentTime;
+      if (typeof duration === "number" && duration > 0 && typeof currentTime === "number") {
+        const progress = ((currentTime % duration) + duration) % duration;
+        const index = Math.floor(progress / (duration / campaigns.length));
+        setActiveCampaign((current) => current === index ? current : index);
+      }
+      frameId = requestAnimationFrame(updateActiveCampaign);
+    };
+
+    frameId = requestAnimationFrame(updateActiveCampaign);
+    return () => cancelAnimationFrame(frameId);
+  }, [campaigns.length]);
+
+  const selectCampaign = (index) => {
+    const track = campaignTrackRef.current;
+    const animation = track?.getAnimations()[0];
+    const duration = animation?.effect?.getTiming().duration;
+    if (animation && typeof duration === "number") {
+      animation.currentTime = index * duration / campaigns.length;
+    } else if (track) {
+      const card = track?.children[index];
+      const gap = Number.parseFloat(getComputedStyle(track).columnGap) || 0;
+      const width = card?.getBoundingClientRect().width || 0;
+      campaignViewportRef.current?.scrollTo({ left: index * (width + gap), behavior: "smooth" });
+    }
+    setActiveCampaign(index);
+  };
 
   return (
     <>
@@ -264,8 +300,8 @@ function Home() {
           <div><p className="eyebrow">OFFERS TO EXPLORE</p><h2 id="campaign-heading">Find your next deal.</h2></div>
           <span className="campaign-demo-note">Sample posters · confirm all terms in store</span>
         </div>
-        <div className="campaign-viewport">
-          <div className="campaign-track">
+        <div className="campaign-viewport" ref={campaignViewportRef}>
+          <div className="campaign-track" ref={campaignTrackRef}>
             {[...campaigns, ...campaigns].map((campaign, index) => (
               <article
                 key={`${campaign.id}-${index}`}
@@ -284,6 +320,18 @@ function Home() {
               </article>
             ))}
           </div>
+        </div>
+        <div className="campaign-pagination" role="group" aria-label="Choose an offer poster">
+          {campaigns.map((campaign, index) => (
+            <button
+              key={campaign.id}
+              className="campaign-dot"
+              type="button"
+              aria-label={`Show poster ${index + 1}: ${campaign.title}`}
+              aria-pressed={activeCampaign === index}
+              onClick={() => selectCampaign(index)}
+            />
+          ))}
         </div>
       </section>
       <section className="section section-products">

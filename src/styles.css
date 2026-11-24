@@ -380,6 +380,10 @@ html[data-language="bn"] select {
 .campaign-action { display: inline-flex; min-height: 38px; align-items: center; gap: 11px; padding: 0 14px; border: 1px solid rgb(255 255 255 / 48%); border-radius: 7px; background: rgb(255 255 255 / 12%); color: #fff; font-size: 11px; font-weight: 700; transition: background 150ms ease; }
 .campaign-action:hover { background: rgb(255 255 255 / 24%); }
 .campaign-art { position: absolute; top: 50%; right: 11%; display: grid; width: 22%; max-width: 145px; aspect-ratio: 1; place-items: center; transform: translateY(-50%) rotate(9deg); border: 1px solid rgb(255 255 255 / 55%); border-radius: 31%; background: rgb(255 255 255 / 16%); box-shadow: 0 24px 48px rgb(0 0 0 / 15%); color: #fff; font-family: "Manrope", sans-serif; font-size: clamp(48px, 9vw, 105px); font-weight: 800; line-height: 1; backdrop-filter: blur(5px); }
+.campaign-pagination { display: flex; justify-content: center; gap: 9px; margin-top: 20px; }
+.campaign-dot { width: 9px; height: 9px; padding: 0; border: 0; border-radius: 999px; background: var(--color-border); cursor: pointer; transition: width 180ms ease, background 180ms ease, transform 180ms ease; }
+.campaign-dot:hover { transform: scale(1.15); background: var(--color-primary); }
+.campaign-dot[aria-pressed="true"] { width: 27px; background: var(--color-primary); }
 @keyframes campaign-scroll { to { transform: translateX(calc(-50% - var(--campaign-gap) / 2)); } }
 
 .section { padding: 82px 0; }
@@ -911,6 +915,9 @@ html[data-language="bn"] select {
   .campaign-description { margin-bottom: 9px; font-size: 9px; line-height: 1.4; }
   .campaign-action { min-height: 30px; gap: 7px; padding-inline: 9px; font-size: 9px; }
   .campaign-art { right: 5%; width: 20%; font-size: clamp(38px, 12vw, 64px); }
+  .campaign-pagination { gap: 8px; margin-top: 15px; }
+  .campaign-dot { width: 8px; height: 8px; }
+  .campaign-dot[aria-pressed="true"] { width: 23px; }
   .section { padding: 60px 0; }
   .section-heading { align-items: flex-start; }
   .section-heading h2, .visit-grid h2 { font-size: 30px; }
